@@ -1,10 +1,38 @@
-{
-  "prefix": "$HOME/.roblox-linux-compat",
-  "exe": "$HOME/.roblox-linux-compat/drive_c/Program Files/Roblox/RobloxPlayerLauncher.exe",
-  "env": {
-    "WINEPREFIX": "$HOME/.roblox-linux-compat",
-    "WINEDLLOVERRIDES": "winemenubuilder.exe=d",
-    "DXVK_ASYNC": "1",
-    "VKD3D_CONFIG": "dxr,dxr11"
-  }
-}
+#!/usr/bin/env python3
+import os
+import subprocess
+from pathlib import Path
+
+
+class RuntimeDiagnostics:
+    def __init__(self, prefix: str | Path | None = None):
+        self.prefix = Path(prefix).expanduser() if prefix is not None else Path.home() / ".roblox-linux-compat"
+
+    def _roblox_launcher_candidates(self) -> list[Path]:
+        return [
+            self.prefix / "drive_c" / "Program Files" / "Roblox" / "RobloxPlayerLauncher.exe",
+            self.prefix / "drive_c" / "Program Files (x86)" / "Roblox" / "RobloxPlayerLauncher.exe",
+            self.prefix / "drive_c" / "Program Files" / "Roblox Player" / "RobloxPlayerLauncher.exe",
+        ]
+
+    def collect(self) -> str:
+        launcher = next((p for p in self._roblox_launcher_candidates() if p.exists()), self._roblox_launcher_candidates()[0])
+        info = []
+        info.append(f"Wine prefix: {self.prefix}")
+        info.append(f"Wine version: {subprocess.getoutput('wine --version 2>/dev/null || echo unavailable')}")
+        info.append(f"Wine config: {subprocess.getoutput('winecfg --help 2>/dev/null | head -1 || echo unavailable')}")
+        info.append(f"Vulkan info: {subprocess.getoutput('vulkaninfo 2>/dev/null | head -20 || echo unavailable')}")
+        info.append(f"Prefix exists: {'yes' if self.prefix.exists() else 'no'}")
+        info.append(f"Roblox launcher candidate: {launcher}")
+        info.append(f"Prefix listing: {subprocess.getoutput(f'ls -R {self.prefix} 2>/dev/null | head -50 || echo unavailable')}")
+        return "\n".join(info)
+
+    def save(self, output_path: str | Path | None = None) -> str:
+        if output_path is None:
+            output_path = self.prefix / "roblox-diagnostics.txt"
+        path = Path(output_path).expanduser()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        report = self.collect()
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(report)
+        return str(path)

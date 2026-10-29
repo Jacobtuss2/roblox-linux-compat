@@ -1,91 +1,49 @@
-import json
+#!/usr/bin/env python3
 import os
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-class RobloxConfig:
-    DEFAULT_PROFILE = "default"
+from launcher.config import RobloxConfig
 
-    def __init__(
-        self,
-        prefix: str | Path | None = None,
-        profile_name: str = DEFAULT_PROFILE,
-        exe: str | Path | None = None,
-        profile_dir: str | Path | None = None,
-    ):
-        self.home = Path.home()
-        self.profile_name = profile_name
-        self.profile_dir = Path(profile_dir) if profile_dir else self.home / ".roblox-linux-compat" / "profiles"
-        self.prefix = Path(prefix) if prefix else self.home / ".roblox-linux-compat"
-        self.override_exe = Path(exe) if exe else None
-        self.env = {
-            "WINEPREFIX": str(self.prefix),
-            "WINEDLLOVERRIDES": "winemenubuilder.exe=d",
-            "DXVK_ASYNC": "1",
-            "VKD3D_CONFIG": "dxr,dxr11",
-        }
 
-    def _profile_paths(self) -> list[Path]:
-        candidates = [
-            self.profile_dir / f"{self.profile_name}.json",
-            self.home / ".roblox-linux-compat" / "profiles" / f"{self.profile_name}.json",
-            Path(__file__).resolve().parents[2] / "profiles" / f"{self.profile_name}.json",
-        ]
-        return [p for p in candidates if p.exists()]
+class RobloxLauncher:
+    def __init__(self, config: RobloxConfig | None = None):
+        self.config = config or RobloxConfig()
 
-    def load_profile(self, profile_name: str | None = None) -> dict:
-        name = profile_name or self.profile_name
-        self.profile_name = name
-        profile_paths = [
-            self.profile_dir / f"{name}.json",
-            self.home / ".roblox-linux-compat" / "profiles" / f"{name}.json",
-            Path(__file__).resolve().parents[2] / "profiles" / f"{name}.json",
-        ]
-        for path in profile_paths:
-            if path.exists():
-                with open(path, "r", encoding="utf-8") as fh:
-                    data = json.load(fh)
-                if "prefix" in data:
-                    self.prefix = Path(data["prefix"]).expanduser()
-                if "exe" in data:
-                    self.override_exe = Path(data["exe"]).expanduser()
-                if "env" in data:
-                    self.env.update({str(k): str(v) for k, v in data["env"].items()})
-                return data
-        return {}
+    def ensure_runtime(self) -> tuple[bool, str]:
+        if shutil.which("wine") is None:
+            return False, "wine is not installed or not on PATH."
 
-    def build_env(self) -> dict[str, str]:
-        env = os.environ.copy()
-        env.update(self.env)
-        return env
+        if not self.config.prefix.exists():
+            return False, f"Wine prefix does not exist: {self.config.prefix}"
 
-    def candidate_paths(self) -> list[Path]:
-        if self.override_exe:
-            return [self.override_exe]
-        return [
-            self.prefix / "drive_c" / "Program Files" / "Roblox" / "RobloxPlayerLauncher.exe",
-            self.prefix / "drive_c" / "Program Files (x86)" / "Roblox" / "RobloxPlayerLauncher.exe",
-            self.prefix / "drive_c" / "Program Files" / "Roblox Player" / "RobloxPlayerLauncher.exe",
-        ]
-
-    def get_roblox_exe(self) -> Path:
-        for candidate in self.candidate_paths():
-            if candidate.exists():
-                return candidate
-        return self.candidate_paths()[0]
-
-    def validate(self) -> tuple[bool, list[str]]:
-        issues: list[str] = []
-
-        if not self.prefix.exists():
-            issues.append(f"Wine prefix does not exist: {self.prefix}")
-
-        if not shutil.which("wine"):
-            issues.append("wine is not installed or is not on PATH")
-
-        exe = self.get_roblox_exe()
+        exe = self.config.get_roblox_exe()
         if not exe.exists():
-            issues.append(f"Roblox launcher not found at expected location: {exe}")
+            return False, f"Roblox launcher not found: {exe}"
 
-        return (len(issues) == 0), issues
+        return True, "Runtime is ready."
+
+    def run(self) -> int:
+        ok, message = self.ensure_runtime()
+        if not ok:
+            print(f"[roblox-linux-compat] {message}")
+            print("Install the system dependencies, initialize the Wine prefix, and install Roblox before retrying.")
+            return 1
+
+        env = self.config.build_env()
+        exe = self.config.get_roblox_exe()
+        print(f"[roblox-linux-compat] Launching Roblox via Wine: {exe}")
+        try:
+            return subprocess.call(["wine", str(exe)], env=env)
+        except FileNotFoundError:
+            print("[roblox-linux-compat] wine command not found.")
+            return 1
+
+
+if __name__ == "__main__":
+    sys.exit(RobloxLauncher().run())
