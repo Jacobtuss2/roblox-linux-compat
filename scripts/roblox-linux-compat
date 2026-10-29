@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export PYTHONPATH="${PYTHONPATH:-$PWD/src}"
+export WINEPREFIX="${WINEPREFIX:-$HOME/.roblox-linux-compat}"
+
+if [ "$#" -eq 0 ]; then
+  echo "Usage: $0 {status|launch|diagnose} [--prefix /path/to/wineprefix]"
+  exit 1
+fi
+
+COMMAND="$1"
+shift || true
+
+python3 launcher.py "$COMMAND" "$@"
