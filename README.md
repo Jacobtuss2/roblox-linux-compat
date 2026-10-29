@@ -8,7 +8,7 @@ Roblox does not officially support Linux, so this project targets a compatibilit
 
 - Linux launcher UI
 - Wine/DXVK/VKD3D compatibility runtime setup
-- Robux launcher path and startup wrappers
+- Roblox launcher path and startup wrappers
 - debug and runtime diagnostics
 - controller and input mapping tools
 
@@ -29,7 +29,7 @@ This is a Linux compatibility project, not a native Roblox Linux client. The goa
    ./install/install_pi5_dependencies.sh
    ```
 
-2. Install the Wine runtime stack:
+2. Initialize the Wine runtime stack:
    ```bash
    ./install/install_wine_stack.sh
    ```
@@ -39,21 +39,34 @@ This is a Linux compatibility project, not a native Roblox Linux client. The goa
    ./src/scripts/install_roblox.sh /path/to/RobloxInstaller.exe
    ```
 
-4. Launch Roblox:
+4. Validate the runtime state:
+   ```bash
+   PYTHONPATH=src python3 -m launcher.cli status
+   ```
+
+5. Launch Roblox:
    ```bash
    ./src/scripts/start_roblox.sh
    ```
 
-5. Run diagnostics if startup fails:
+6. Run diagnostics if startup fails:
    ```bash
-   ./src/scripts/debug_roblox.sh
+   PYTHONPATH=src python3 -m launcher.cli diagnose
    ```
 
 ## Repository layout
 
 - `install/` — Linux system and Wine compatibility installation scripts
-- `src/launcher/` — Linux launcher logic and configuration
+- `src/launcher/` — launcher logic, config, and CLI
 - `src/runtime/` — compatibility runtime and debug helpers
 - `src/input/` — input mapping for keyboard, mouse, controller
 - `src/scripts/` — startup and install wrappers
 - `docs/` — setup and troubleshooting guides
+
+## Command-line workflow
+
+```bash
+PYTHONPATH=src python3 -m launcher.cli status
+PYTHONPATH=src python3 -m launcher.cli launch
+PYTHONPATH=src python3 -m launcher.cli diagnose
+```
