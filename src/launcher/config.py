@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+
 class RobloxConfig:
     def __init__(self):
         self.home = Path.home()

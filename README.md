@@ -1,67 +1,59 @@
-# roblox-linux-compat
+# Roblox Linux Compatibility Project
 
-A Linux compatibility project to run Roblox on Raspberry Pi 5 using a Wine/Proton-based runtime and launcher layer.
+This project is intended to provide a Linux-native launcher and compatibility runtime for Roblox on Raspberry Pi 5.
 
-## Goal
-This project aims to provide a Linux-native launcher and compatibility runtime for Roblox on Raspberry Pi 5, using Windows compatibility layers where no native Linux client exists.
+## Overview
 
-## Important note
-This is not a native Roblox Linux port. It is a compatibility engineering project designed to run the Roblox client under a Linux-based launcher environment.
+Roblox does not officially support Linux, so this project targets a compatibility path using a Windows runtime under Linux. The project includes:
 
-## Project structure
+- Linux launcher UI
+- Wine/DXVK/VKD3D compatibility runtime setup
+- Robux launcher path and startup wrappers
+- debug and runtime diagnostics
+- controller and input mapping tools
 
-- `README.md` — project overview
-- `install/`
-  - `install_pi5_dependencies.sh` — system dependencies
-  - `install_wine_stack.sh` — Wine/DXVK/VKD3D setup
-- `src/`
-  - `launcher/`
-    - `app.py` — launcher entry point
-    - `config.py` — configuration management
-    - `ui.py` — optional Qt UI
-  - `runtime/`
-    - `runner.py` — Roblox runner logic
-    - `wine_prefix.py` — prefix management
-    - `diagnostics.py` — logs and runtime diagnostics
-  - `input/`
-    - `controllers.py` — controller mapping
-    - `mapping.py` — keyboard/mouse mapping
-  - `scripts/`
-    - `start_roblox.sh` — starts Roblox in the compatibility runtime
-    - `debug_roblox.sh` — collects logs and runtime failure data
-- `docs/`
-  - `setup.md` — setup guide
-  - `troubleshooting.md` — common issues
-  - `compatibility.md` — compatibility notes
+## Target platform
 
-## Hardware target
 - Raspberry Pi 5
-- Raspberry Pi OS 64-bit (recommended)
-- Vulkan-compatible GPU stack
+- Raspberry Pi OS 64-bit
+- Vulkan-capable graphics stack
 
-## Compatibility stack
-- Wine / Proton-style runtime
-- DXVK (DirectX to Vulkan)
-- VKD3D (D3D to Vulkan)
-- Box64 / Box86 if needed for x86_64 compatibility
-- Linux launcher UI and input remapping
+## Compatibility model
 
-## First-pass install flow
-```bash
-chmod +x install/install_pi5_dependencies.sh
-./install/install_pi5_dependencies.sh
-./install/install_wine_stack.sh
-```
+This is a Linux compatibility project, not a native Roblox Linux client. The goal is to launch Roblox through a Windows-compatible runtime environment under Linux.
 
-## Planned milestones
-1. Create a clean Wine prefix
-2. Install Roblox launcher inside the prefix
-3. Launch Roblox and capture failures
-4. Fix missing DLLs and runtime dependencies
-5. Add graphics compatibility layer tuning
-6. Add input remapping and controller support
-7. Create launcher UI
-8. Stabilize startup and runtime behavior
+## Quick start
 
-## Repository status
-This repository is the initial scaffold for the Linux compatibility project.
+1. Install dependencies:
+   ```bash
+   ./install/install_pi5_dependencies.sh
+   ```
+
+2. Install the Wine runtime stack:
+   ```bash
+   ./install/install_wine_stack.sh
+   ```
+
+3. Install Roblox inside the Wine prefix:
+   ```bash
+   ./src/scripts/install_roblox.sh /path/to/RobloxInstaller.exe
+   ```
+
+4. Launch Roblox:
+   ```bash
+   ./src/scripts/start_roblox.sh
+   ```
+
+5. Run diagnostics if startup fails:
+   ```bash
+   ./src/scripts/debug_roblox.sh
+   ```
+
+## Repository layout
+
+- `install/` — Linux system and Wine compatibility installation scripts
+- `src/launcher/` — Linux launcher logic and configuration
+- `src/runtime/` — compatibility runtime and debug helpers
+- `src/input/` — input mapping for keyboard, mouse, controller
+- `src/scripts/` — startup and install wrappers
+- `docs/` — setup and troubleshooting guides

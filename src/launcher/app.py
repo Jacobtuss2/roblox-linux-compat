@@ -5,6 +5,7 @@ from pathlib import Path
 
 from launcher.config import RobloxConfig
 
+
 class RobloxLauncher:
     def __init__(self):
         self.config = RobloxConfig()
@@ -25,6 +26,7 @@ class RobloxLauncher:
         exe = self.config.get_roblox_exe()
         print(f"Launching Roblox via Wine: {exe}")
         return subprocess.call(["wine", str(exe)], env=env)
+
 
 if __name__ == "__main__":
     sys.exit(RobloxLauncher().run())
